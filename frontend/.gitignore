@@ -2,4 +2,6 @@
 /dist
 .env
 .env.*
-
+!.env.example
+!/dist/
+!/dist/**
