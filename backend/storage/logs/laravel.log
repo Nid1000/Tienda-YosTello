@@ -4745,3 +4745,20 @@ Did you mean one of these?
 #58 Standard input code(6): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
 #59 {main}
 "} 
+[2026-04-23 02:18:02] local.ERROR: Command "test" is not defined.
+
+Did you mean one of these?
+    make:test
+    schedule:test {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"test\" is not defined.
+
+Did you mean one of these?
+    make:test
+    schedule:test at C:/Users/Usuario/Downloads/TIENDA DE ROPAS/backend/vendor/symfony/console/Application.php:759)
+[stacktrace]
+#0 C:/Users/Usuario/Downloads/TIENDA DE ROPAS/backend/vendor/symfony/console/Application.php(298): Symfony/Component/Console/Application->find('test')
+#1 C:/Users/Usuario/Downloads/TIENDA DE ROPAS/backend/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#2 C:/Users/Usuario/Downloads/TIENDA DE ROPAS/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#3 C:/Users/Usuario/Downloads/TIENDA DE ROPAS/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#4 C:/Users/Usuario/Downloads/TIENDA DE ROPAS/backend/artisan(14): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
+#5 {main}
+"} 
