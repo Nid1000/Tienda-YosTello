@@ -21,7 +21,7 @@ class PeruIdentityService
 
     public function missingConfigurationMessage(): string
     {
-        return 'La búsqueda por DNI o RUC no está disponible todavía. Configura un proveedor en backend/.env y reinicia Laravel.';
+        return 'La busqueda por DNI o RUC no esta disponible todavia. Configura un token real del proveedor en backend/.env y reinicia Laravel.';
     }
 
     public function lookupDni(string $dni): array
@@ -80,14 +80,15 @@ class PeruIdentityService
 
     protected function request(string $documentType, string $number): array
     {
+        $providers = array_values(array_filter(
+            $this->providerSequence(),
+            fn (string $provider): bool => $this->providerIsConfigured($provider)
+        ));
+
         $attemptedProviders = [];
         $providerFailures = [];
 
-        foreach ($this->providerSequence() as $provider) {
-            if (! $this->providerIsConfigured($provider)) {
-                continue;
-            }
-
+        foreach ($providers as $index => $provider) {
             $attemptedProviders[] = $provider;
 
             $result = match ($provider) {
@@ -96,7 +97,7 @@ class PeruIdentityService
                 default => [
                     'success' => false,
                     'status' => 500,
-                    'message' => "El proveedor {$provider} no está soportado.",
+                    'message' => "El proveedor {$provider} no esta soportado.",
                 ],
             };
 
@@ -112,6 +113,15 @@ class PeruIdentityService
                 'status' => $result['status'],
                 'message' => $result['message'],
             ];
+
+            $hasMoreProviders = isset($providers[$index + 1]);
+
+            if (! $hasMoreProviders) {
+                return [
+                    ...$result,
+                    'provider' => $provider,
+                ];
+            }
 
             if (! $this->shouldFallback($result['status'])) {
                 return [
@@ -147,6 +157,7 @@ class PeruIdentityService
             $response = Http::acceptJson()
                 ->asJson()
                 ->withToken($token)
+                ->timeout(15)
                 ->post($baseUrl.'/'.$endpoint, [
                     $field => $number,
                 ]);
@@ -173,6 +184,7 @@ class PeruIdentityService
                     'Referer' => $referer,
                     'User-Agent' => 'laravel-http-client',
                 ])
+                ->timeout(15)
                 ->get($baseUrl.'/'.$endpoint, [
                     'numero' => $number,
                 ]);
@@ -190,7 +202,24 @@ class PeruIdentityService
         }
 
         $payload = $response->json();
-        $data = $payload['data'] ?? [];
+
+        if (! is_array($payload)) {
+            return [
+                'success' => false,
+                'status' => 502,
+                'message' => 'El proveedor actual devolvio una respuesta invalida.',
+            ];
+        }
+
+        if (($payload['success'] ?? true) !== true) {
+            return [
+                'success' => false,
+                'status' => $this->resolvePayloadStatus($payload),
+                'message' => $this->resolvePayloadMessage($payload, strtoupper($documentType)),
+            ];
+        }
+
+        $data = is_array($payload['data'] ?? null) ? $payload['data'] : [];
 
         if ($documentType === 'dni') {
             return [
@@ -264,7 +293,7 @@ class PeruIdentityService
         $message = "No se pudo consultar el {$documentLabel} en este momento.";
 
         if (in_array($response->status(), [401, 403], true)) {
-            $message = 'El token configurado no es válido o ya no tiene acceso en el proveedor actual.';
+            $message = 'El token configurado no es valido o ya no tiene acceso en el proveedor actual.';
         } elseif ($apiMessage !== '') {
             $message = $apiMessage;
         }
@@ -329,8 +358,8 @@ class PeruIdentityService
     protected function providerIsConfigured(string $provider): bool
     {
         return match ($provider) {
-            'apiperu' => trim((string) config('services.peru_identity.apiperu.token')) !== '',
-            'apisnet' => trim((string) config('services.peru_identity.apisnet.token')) !== '',
+            'apiperu' => $this->hasUsableToken((string) config('services.peru_identity.apiperu.token')),
+            'apisnet' => $this->hasUsableToken((string) config('services.peru_identity.apisnet.token')),
             default => false,
         };
     }
@@ -338,5 +367,49 @@ class PeruIdentityService
     protected function shouldFallback(int $status): bool
     {
         return in_array($status, [401, 403, 404, 422, 429, 500, 502, 503, 504], true);
+    }
+
+    protected function hasUsableToken(string $token): bool
+    {
+        $normalized = trim($token);
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        $placeholders = [
+            'TU_TOKEN_REAL_APIPERU',
+            'TU_TOKEN_REAL_APISNET',
+            '<token>',
+            'INGRESAR_TOKEN_AQUI',
+        ];
+
+        if (in_array($normalized, $placeholders, true)) {
+            return false;
+        }
+
+        return ! str_starts_with($normalized, 'TU_TOKEN_');
+    }
+
+    protected function resolvePayloadStatus(array $payload): int
+    {
+        $status = (int) ($payload['status'] ?? 0);
+
+        if ($status >= 400) {
+            return $status;
+        }
+
+        return 422;
+    }
+
+    protected function resolvePayloadMessage(array $payload, string $documentLabel): string
+    {
+        $message = trim((string) ($payload['message'] ?? $payload['error'] ?? ''));
+
+        if ($message !== '') {
+            return $message;
+        }
+
+        return "No se pudo consultar el {$documentLabel} en este momento.";
     }
 }
