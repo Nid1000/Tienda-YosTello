@@ -15,29 +15,38 @@
                     action="{{ route('checkout.store') }}"
                     class="stack-form checkout-form-advanced"
                     data-dni-form
-                    data-dni-url="{{ route('checkout.lookup-dni') }}"
+                    data-dni-url="{{ url('/api/v1/peru/dni') }}"
+                    data-ruc-url="{{ url('/api/v1/peru/ruc') }}"
+                    data-dni-enabled="{{ $documentLookupConfigured ? 'true' : 'false' }}"
+                    data-dni-disabled-message="{{ $documentLookupMessage }}"
+                    data-old-department="{{ old('department', 'Lima') }}"
+                    data-old-province="{{ old('province', 'Lima') }}"
+                    data-old-district="{{ old('district') }}"
                 >
                     @csrf
                     <div class="panel-card">
                         <p class="eyebrow">Identificacion</p>
                         <h1>Finaliza tu compra</h1>
-                        <p class="checkout-copy">Solicitamos unicamente la informacion esencial para completar el pedido. Si el cliente compra con DNI peruano, podemos autocompletar nombres desde la API.</p>
+                        <p class="checkout-copy">Solicitamos unicamente la informacion esencial para completar el pedido. Si el cliente compra con DNI o RUC peruano, podemos autocompletar datos desde la API.</p>
 
                         <div class="checkout-grid two-columns">
                             <label>
                                 <span>Tipo de documento</span>
-                                <select name="document_type" data-document-type required>
-                                    <option value="DNI" @selected(old('document_type', 'DNI') === 'DNI')>DNI</option>
-                                    <option value="CE" @selected(old('document_type') === 'CE')>C.E.</option>
-                                </select>
+                                <div class="select-field">
+                                    <select name="document_type" data-document-type required>
+                                        <option value="DNI" @selected(old('document_type', 'DNI') === 'DNI')>DNI</option>
+                                        <option value="RUC" @selected(old('document_type') === 'RUC')>RUC</option>
+                                        <option value="CE" @selected(old('document_type') === 'CE')>C.E.</option>
+                                    </select>
+                                </div>
                             </label>
                             <label>
                                 <span>Documento de identidad</span>
                                 <div class="lookup-row">
-                                    <input type="text" name="document_number" value="{{ old('document_number') }}" data-dni-input required>
-                                    <button class="button secondary" type="button" data-dni-trigger>Buscar DNI</button>
+                                    <input type="text" name="document_number" value="{{ old('document_number') }}" data-dni-input maxlength="8" inputmode="numeric" pattern="[0-9]{8}" required>
+                                    <button class="button secondary" type="button" data-dni-trigger @disabled(! $documentLookupConfigured)>Buscar</button>
                                 </div>
-                                <small data-dni-feedback></small>
+                                <small data-dni-feedback>{{ $documentLookupMessage }}</small>
                             </label>
                             <label>
                                 <span>Nombres</span>
@@ -53,7 +62,7 @@
                             </label>
                             <label>
                                 <span>Telefono / movil</span>
-                                <input type="text" name="customer_phone" value="{{ old('customer_phone') }}" required>
+                                <input type="text" name="customer_phone" value="{{ old('customer_phone') }}" data-customer-phone required>
                             </label>
                         </div>
                     </div>
@@ -74,24 +83,32 @@
 
                             <label>
                                 <span>Metodo de pago</span>
-                                <select name="payment_method" required>
-                                    <option value="tarjeta" @selected(old('payment_method') === 'tarjeta')>Tarjeta o billetera digital</option>
-                                    <option value="transferencia" @selected(old('payment_method') === 'transferencia')>Transferencia bancaria</option>
-                                    <option value="contraentrega" @selected(old('payment_method') === 'contraentrega')>Contraentrega</option>
-                                </select>
+                                <div class="select-field">
+                                    <select name="payment_method" required>
+                                        <option value="tarjeta" @selected(old('payment_method') === 'tarjeta')>Tarjeta o billetera digital</option>
+                                        <option value="transferencia" @selected(old('payment_method') === 'transferencia')>Transferencia bancaria</option>
+                                        <option value="contraentrega" @selected(old('payment_method') === 'contraentrega')>Contraentrega</option>
+                                    </select>
+                                </div>
                             </label>
 
                             <label>
                                 <span>Departamento</span>
-                                <input type="text" name="department" value="{{ old('department', 'Lima') }}" required>
+                                <div class="select-field">
+                                    <select name="department" data-department-select required></select>
+                                </div>
                             </label>
                             <label>
                                 <span>Provincia</span>
-                                <input type="text" name="province" value="{{ old('province', 'Lima') }}" required>
+                                <div class="select-field">
+                                    <select name="province" data-province-select required disabled></select>
+                                </div>
                             </label>
                             <label>
                                 <span>Distrito</span>
-                                <input type="text" name="district" value="{{ old('district') }}" required>
+                                <div class="select-field">
+                                    <select name="district" data-district-select required disabled></select>
+                                </div>
                             </label>
                             <label>
                                 <span>Referencia</span>
@@ -101,7 +118,7 @@
 
                         <label>
                             <span>Direccion de envio</span>
-                            <textarea name="shipping_address" rows="4" required>{{ old('shipping_address') }}</textarea>
+                            <textarea name="shipping_address" rows="4" data-shipping-address required>{{ old('shipping_address') }}</textarea>
                         </label>
                     </div>
 
@@ -134,4 +151,6 @@
             </aside>
         </div>
     </section>
+
+    <script type="application/json" data-peru-ubigeo>@json($peruUbigeo)</script>
 @endsection

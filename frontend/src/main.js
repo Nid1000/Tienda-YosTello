@@ -37,7 +37,6 @@ app.innerHTML = `
             <button class="topbar-contact" data-panel-target="contact">+ Pongase en contacto con nosotros</button>
             <a class="topbar-brand" href="#" data-go-home>YO-TELLO</a>
             <div class="topbar-right">
-                <button class="topbar-action" data-panel-target="bag">Bolsa <span id="bag-count" class="action-count">0</span></button>
                 ${accountAction}
                 <a class="topbar-action" href="${backendBase}/productos">Buscar</a>
                 <button class="topbar-action" data-panel-target="menu">Menu</button>
@@ -275,11 +274,11 @@ app.innerHTML = `
 
             <section class="editorial-section latest-section" id="latest-products">
                 <div class="section-copy dark-copy">
-                    <p class="section-kicker">Novedades</p>
-                    <h2>Ultimos ingresos</h2>
+                    <p class="section-kicker">Catalogo completo</p>
+                    <h2>Todos los productos</h2>
                 </div>
                 <div id="latest-grid" class="latest-grid">
-                    <div class="product-loading">Cargando novedades...</div>
+                    <div class="product-loading">Cargando todos los productos...</div>
                 </div>
             </section>
 
@@ -287,19 +286,28 @@ app.innerHTML = `
                 <p class="section-kicker">Servicios YO-TELLO</p>
                 <div class="service-grid">
                     <article class="service-card">
-                        <div class="service-image service-image-dark"></div>
+                        <div
+                            class="service-image"
+                            style="background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.28)), url('${backendBase}/services/appointment.jpg');"
+                        ></div>
                         <strong>Reservar cita</strong>
                         <p>Atencion personalizada para elegir piezas, tallas y combinaciones con calma.</p>
                         <a href="mailto:hola@yotello.com" target="_blank" rel="noreferrer">Reservar ahora</a>
                     </article>
                     <article class="service-card">
-                        <div class="service-image service-image-gold"></div>
+                        <div
+                            class="service-image"
+                            style="background-image: linear-gradient(180deg, rgba(61, 32, 0, 0.12), rgba(61, 32, 0, 0.34)), url('${backendBase}/services/personalization.jpg');"
+                        ></div>
                         <strong>Personalizacion</strong>
                         <p>Detalles especiales, empaques cuidados y una experiencia mas exclusiva.</p>
                         <a href="${backendBase}/productos" target="_blank" rel="noreferrer">Descubrir</a>
                     </article>
                     <article class="service-card">
-                        <div class="service-image service-image-stone"></div>
+                        <div
+                            class="service-image"
+                            style="background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.24)), url('${backendBase}/services/pickup.jpg');"
+                        ></div>
                         <strong>Recogida en tienda</strong>
                         <p>Compra online y recoge tu pedido en el punto que prefieras.</p>
                         <a href="${backendBase}/checkout" target="_blank" rel="noreferrer">Como funciona</a>
@@ -527,7 +535,9 @@ const addToBag = (productId) => {
 
 const renderBag = () => {
     const totalItems = state.cart.reduce((sum, item) => sum + item.qty, 0);
-    bagCount.textContent = String(totalItems);
+    if (bagCount) {
+        bagCount.textContent = String(totalItems);
+    }
 
     if (state.cart.length === 0) {
         bagHeading.textContent = 'Su bolsa de compra esta actualmente vacia';
@@ -574,7 +584,6 @@ const renderBag = () => {
                     <div class="bag-summary-row total-row"><span>Total estimado</span><strong>${formatCurrency(total)}</strong></div>
                     <div class="bag-summary-actions">
                         <a class="dialog-button primary-dialog" href="${backendBase}/checkout" target="_blank" rel="noreferrer" data-bridge-target="checkout">Continuar compra</a>
-                        <a class="dialog-button secondary-dialog" href="${backendBase}/carrito" target="_blank" rel="noreferrer" data-bridge-target="cart">Abrir carrito Laravel</a>
                     </div>
                 </aside>
             </div>
@@ -637,6 +646,46 @@ const promotionCard = (promotion, index) => `
         </div>
     </article>
 `;
+
+const pickDiverseProducts = (products, limit = 4) => {
+    const pool = Array.isArray(products) ? products : [];
+    const uniqueByCategory = [];
+    const seenCategories = new Set();
+
+    pool.forEach((product) => {
+        const categoryKey = String(product.category || '').trim().toLowerCase();
+
+        if (uniqueByCategory.length >= limit || seenCategories.has(categoryKey)) {
+            return;
+        }
+
+        seenCategories.add(categoryKey);
+        uniqueByCategory.push(product);
+    });
+
+    if (uniqueByCategory.length >= limit) {
+        return uniqueByCategory.slice(0, limit);
+    }
+
+    const usedIds = new Set(uniqueByCategory.map((product) => product.id));
+    const remaining = pool.filter((product) => !usedIds.has(product.id));
+
+    return [...uniqueByCategory, ...remaining].slice(0, limit);
+};
+
+const excludeProductsById = (products, excludedIds) => {
+    const blocked = new Set(excludedIds);
+
+    return (Array.isArray(products) ? products : []).filter((product) => !blocked.has(product.id));
+};
+
+const pickProductsByName = (products, names) => {
+    const wanted = new Set((Array.isArray(names) ? names : []).map((name) => String(name).trim().toLowerCase()));
+
+    return (Array.isArray(products) ? products : []).filter((product) =>
+        wanted.has(String(product.name || '').trim().toLowerCase())
+    );
+};
 
 const searchCard = (product) => `
     <article class="search-card" data-open-product="${product.id}">
@@ -744,8 +793,28 @@ fetch(`${apiBase}/storefront/overview`)
         return response.json();
     })
     .then((data) => {
-        state.products = [...data.featuredProducts, ...data.latestProducts]
-            .filter((product, index, array) => array.findIndex((item) => item.id === product.id) === index);
+        const allProducts = data.allProducts?.length
+            ? data.allProducts
+            : [...data.featuredProducts, ...data.latestProducts]
+                .filter((product, index, array) => array.findIndex((item) => item.id === product.id) === index);
+
+        const pinnedMainSelectionNames = ['Jogger Street Move', 'Zapatillas Retro Pulse'];
+        const pinnedMainSelection = pickProductsByName(allProducts, pinnedMainSelectionNames);
+        const pinnedMainSelectionIds = pinnedMainSelection.map((product) => product.id);
+
+        state.products = allProducts;
+
+        const heroProducts = pickDiverseProducts(
+            excludeProductsById(allProducts, pinnedMainSelectionIds),
+            4
+        );
+        const heroProductIds = heroProducts.map((product) => product.id);
+        const featuredProducts = [
+            ...pinnedMainSelection,
+            ...excludeProductsById(data.featuredProducts, [...heroProductIds, ...pinnedMainSelectionIds]),
+        ].filter((product, index, array) => array.findIndex((item) => item.id === product.id) === index);
+        const featuredProductIds = featuredProducts.map((product) => product.id);
+        const latestProducts = excludeProductsById(allProducts, [...heroProductIds, ...featuredProductIds]);
 
         const visualFeature = data.featuredProducts[0] || data.latestProducts[0];
         if (visualFeature) {
@@ -758,18 +827,24 @@ fetch(`${apiBase}/storefront/overview`)
             });
         }
 
-        categoryGrid.innerHTML = (data.featuredProducts.length ? data.featuredProducts : data.latestProducts).slice(0, 4).map(categoryCard).join('');
+        categoryGrid.innerHTML = heroProducts.length
+            ? heroProducts.map(categoryCard).join('')
+            : '<div class="category-placeholder">No hay productos disponibles en este momento.</div>';
         backendStats.innerHTML = `
             <article class="stat-card"><span>Productos</span><strong>${data.stats.products}</strong></article>
             <article class="stat-card"><span>Destacados</span><strong>${data.stats.featured}</strong></article>
             <article class="stat-card"><span>Categorias</span><strong>${data.stats.categories}</strong></article>
             <article class="stat-card"><span>Stock</span><strong>${data.stats.stock}</strong></article>
         `;
-        featuredGrid.innerHTML = data.featuredProducts.map(featuredCard).join('');
+        featuredGrid.innerHTML = featuredProducts.length
+            ? featuredProducts.map(featuredCard).join('')
+            : '<div class="product-loading">No hay productos destacados adicionales disponibles.</div>';
         promotionsGrid.innerHTML = data.promotions?.length
             ? data.promotions.map(promotionCard).join('')
             : '<div class="product-loading">Crea promociones desde el administrador para destacarlas aqui.</div>';
-        latestGrid.innerHTML = data.latestProducts.map(latestCard).join('');
+        latestGrid.innerHTML = latestProducts.length
+            ? latestProducts.map(latestCard).join('')
+            : '<div class="product-loading">No hay productos disponibles en este momento.</div>';
 
         bindProductCards(categoryGrid);
         bindProductCards(featuredGrid);

@@ -22,8 +22,8 @@
 
             <div>
                 <p class="eyebrow">Panel privado</p>
-                <h1>Panel administrador</h1>
-                <p class="lead compact-lead">Ingresa con tu cuenta admin para gestionar productos, categorias, promociones, usuarios y pedidos.</p>
+                <h1>Panel<br>administrador</h1>
+                <p class="lead compact-lead">Gestiona el catalogo YO-TELLO, inventario, promociones, usuarios y pedidos desde un solo lugar.</p>
             </div>
 
             <?php if(session('status')): ?>
@@ -45,7 +45,7 @@
                     <input type="email" name="email" value="<?php echo e(old('email')); ?>" required autofocus>
                 </label>
                 <label>
-                    <span>Contrasena</span>
+                    <span>Clave de acceso</span>
                     <input type="password" name="password" required>
                 </label>
                 <label class="check-row">

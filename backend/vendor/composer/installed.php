@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'tienda/ropas',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '20e8ce0ad4c819e43e533b42983820dc0dab1f60',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -339,6 +339,15 @@
             'replaced' => array(
                 0 => 'v11.51.0',
             ),
+        ),
+        'laravel/breeze' => array(
+            'pretty_version' => 'v2.4.1',
+            'version' => '2.4.1.0',
+            'reference' => '28cefeaf6af20177ddf5cc7b93e87e4ad79d533f',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../laravel/breeze',
+            'aliases' => array(),
+            'dev_requirement' => true,
         ),
         'laravel/framework' => array(
             'pretty_version' => 'v11.51.0',
@@ -1176,9 +1185,9 @@
             'dev_requirement' => true,
         ),
         'tienda/ropas' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '20e8ce0ad4c819e43e533b42983820dc0dab1f60',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

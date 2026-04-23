@@ -19,6 +19,7 @@
                     <th>Metodo</th>
                     <th>Total</th>
                     <th>Productos</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -29,14 +30,30 @@
                             <strong>{{ $order->customer_name }}</strong>
                             <small class="admin-note">{{ $order->user?->email ?? 'Sin usuario' }}</small>
                         </td>
-                        <td>{{ ucfirst($order->status) }}</td>
+                        <td>
+                            <form method="POST" action="{{ route('admin.pedidos.update', $order) }}" class="admin-inline-form">
+                                @csrf
+                                @method('PATCH')
+                                <select name="status" aria-label="Estado del pedido #{{ $order->id }}">
+                                    @foreach ($statuses as $value => $label)
+                                        <option value="{{ $value }}" @selected($order->status === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <button class="button secondary" type="submit">Guardar</button>
+                            </form>
+                        </td>
                         <td>{{ $order->payment_method }}</td>
                         <td>S/. {{ number_format($order->total, 2, '.', ',') }}</td>
                         <td>{{ $order->items->pluck('product_name')->join(', ') }}</td>
+                        <td>
+                            <small class="admin-note">
+                                {{ $order->created_at?->format('d/m/Y H:i') }}
+                            </small>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6">No hay pedidos registrados.</td>
+                        <td colspan="7">No hay pedidos registrados.</td>
                     </tr>
                 @endforelse
             </tbody>

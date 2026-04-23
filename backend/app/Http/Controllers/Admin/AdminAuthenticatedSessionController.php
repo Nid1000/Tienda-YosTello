@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\View\View;
 
 class AdminAuthenticatedSessionController extends Controller
@@ -14,18 +15,8 @@ class AdminAuthenticatedSessionController extends Controller
     {
         $request->session()->forget('url.intended');
 
-        if ($request->user()?->isAdmin()) {
+        if (Auth::guard('admin')->check() && $request->session()->get('auth_context') === 'admin') {
             return redirect()->route('admin.index');
-        }
-
-        if ($request->user()) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()
-                ->route('admin.login')
-                ->with('status', 'Se cerro la sesion de cliente para abrir el acceso administrador.');
         }
 
         return view('auth.admin-login');
@@ -38,34 +29,41 @@ class AdminAuthenticatedSessionController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::guard('admin')->attempt($credentials, $request->boolean('remember'))) {
             return back()
                 ->withErrors(['email' => 'Las credenciales de administrador no son validas.'])
                 ->onlyInput('email');
         }
 
-        $request->session()->regenerate();
-        $request->session()->forget('url.intended');
-
-        if (! $request->user()->isAdmin()) {
-            Auth::logout();
+        if (! Auth::guard('admin')->user()->is_active) {
+            Auth::guard('admin')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             return back()
-                ->withErrors(['email' => 'Esta cuenta no tiene acceso al panel administrador.'])
+                ->withErrors(['email' => 'Esta cuenta administradora esta desactivada.'])
                 ->onlyInput('email');
         }
 
-        return redirect()->route('admin.index')->with('status', 'Bienvenido al panel administrador.');
+        $request->session()->regenerate();
+        $request->session()->forget('url.intended');
+        $request->session()->put('auth_context', 'admin');
+        $request->session()->put('auth_role', 'admin');
+
+        return redirect()
+            ->route('admin.index')
+            ->with('status', 'Bienvenido al panel administrador.');
     }
 
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::logout();
+        Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('admin.login')->with('status', 'Sesion de administrador cerrada.');
+        return redirect()
+            ->route('admin.login')
+            ->with('status', 'Sesion de administrador cerrada.')
+            ->withCookie(Cookie::forget('session_id_admin'));
     }
 }

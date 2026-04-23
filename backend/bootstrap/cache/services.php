@@ -24,8 +24,9 @@
     20 => 'Illuminate\\Translation\\TranslationServiceProvider',
     21 => 'Illuminate\\Validation\\ValidationServiceProvider',
     22 => 'Illuminate\\View\\ViewServiceProvider',
-    23 => 'Carbon\\Laravel\\ServiceProvider',
-    24 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    23 => 'Laravel\\Breeze\\BreezeServiceProvider',
+    24 => 'Carbon\\Laravel\\ServiceProvider',
+    25 => 'Termwind\\Laravel\\TermwindServiceProvider',
   ),
   'eager' => 
   array (
@@ -193,6 +194,7 @@
     'validator' => 'Illuminate\\Validation\\ValidationServiceProvider',
     'validation.presence' => 'Illuminate\\Validation\\ValidationServiceProvider',
     'Illuminate\\Contracts\\Validation\\UncompromisedVerifier' => 'Illuminate\\Validation\\ValidationServiceProvider',
+    'Laravel\\Breeze\\Console\\InstallCommand' => 'Laravel\\Breeze\\BreezeServiceProvider',
   ),
   'when' => 
   array (
@@ -233,6 +235,9 @@
     array (
     ),
     'Illuminate\\Validation\\ValidationServiceProvider' => 
+    array (
+    ),
+    'Laravel\\Breeze\\BreezeServiceProvider' => 
     array (
     ),
   ),

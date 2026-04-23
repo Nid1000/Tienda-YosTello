@@ -1,7 +1,9 @@
-<?php
+ <?php
 
-use App\Http\Middleware\AdminMiddleware;
-use App\Http\Middleware\CustomerMiddleware;
+use App\Http\Middleware\CheckAuthAdmin;
+use App\Http\Middleware\CheckAuthClient;
+use App\Http\Middleware\CheckJwtContext;
+use App\Http\Middleware\UseContextSessionCookie;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,13 +16,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prependToGroup('web', UseContextSessionCookie::class);
+
         $middleware->validateCsrfTokens(except: [
             '/bridge/cart',
         ]);
 
         $middleware->alias([
-            'admin' => AdminMiddleware::class,
-            'customer' => CustomerMiddleware::class,
+            'checkAuthAdmin' => CheckAuthAdmin::class,
+            'checkAuthClient' => CheckAuthClient::class,
+            'checkJwt' => CheckJwtContext::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

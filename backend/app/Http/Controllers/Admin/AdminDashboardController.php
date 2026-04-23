@@ -17,6 +17,23 @@ class AdminDashboardController extends Controller
     {
         $products = Product::query()->get();
         $orders = Order::query()->latest()->take(5)->get();
+        $categories = Category::query()
+            ->withCount('products')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Category $category) {
+                $stock = Product::query()
+                    ->where('category_id', $category->id)
+                    ->sum('stock');
+
+                return [
+                    'name' => $category->name,
+                    'products' => $category->products_count,
+                    'stock' => (int) $stock,
+                ];
+            });
+        $maxCategoryStock = max(1, (int) $categories->max('stock'));
         $startOfWeek = Carbon::now()->startOfWeek();
         $startOfMonthWindow = Carbon::now()->startOfMonth()->subMonths(5);
         $weeklySales = collect(range(0, 6))->map(function (int $offset) use ($startOfWeek) {
@@ -29,7 +46,22 @@ class AdminDashboardController extends Controller
                     ->sum('total'),
             ];
         });
-        $maxWeeklySales = max(1, (int) ceil($weeklySales->max('amount')));
+        $hasWeeklySales = $weeklySales->sum('amount') > 0;
+        $weeklyPreviewWeights = [0.62, 0.78, 0.54, 0.86, 1, 0.72, 0.48];
+        $weeklyChart = $weeklySales->values()->map(function (array $day, int $index) use ($hasWeeklySales, $products, $weeklyPreviewWeights) {
+            if ($hasWeeklySales) {
+                return $day + ['is_preview' => false];
+            }
+
+            $averageFinalPrice = max(1, (float) $products->avg(fn (Product $product) => $product->final_price));
+
+            return [
+                'label' => $day['label'],
+                'amount' => round($averageFinalPrice * $weeklyPreviewWeights[$index]),
+                'is_preview' => true,
+            ];
+        });
+        $maxWeeklySales = max(1, (int) ceil($weeklyChart->max('amount')));
         $monthlySales = collect(range(0, 5))->map(function (int $offset) use ($startOfMonthWindow) {
             $month = $startOfMonthWindow->copy()->addMonths($offset);
 
@@ -57,7 +89,11 @@ class AdminDashboardController extends Controller
             ],
             'orders' => $orders,
             'promotions' => Promotion::query()->active()->latest()->take(3)->get(),
+            'categoryInventory' => $categories,
+            'maxCategoryStock' => $maxCategoryStock,
             'weeklySales' => $weeklySales,
+            'weeklyChart' => $weeklyChart,
+            'hasWeeklySales' => $hasWeeklySales,
             'maxWeeklySales' => $maxWeeklySales,
             'monthlySales' => $monthlySales,
             'maxMonthlySales' => $maxMonthlySales,

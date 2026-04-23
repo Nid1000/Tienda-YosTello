@@ -13,6 +13,12 @@ class StorefrontController extends Controller
 {
     public function overview(): JsonResponse
     {
+        $allProducts = Product::query()
+            ->with('catalogCategory')
+            ->latest()
+            ->get()
+            ->map(fn (Product $product) => $this->transformProduct($product));
+
         $featuredProducts = Product::query()
             ->with('catalogCategory')
             ->where('is_featured', true)
@@ -62,7 +68,7 @@ class StorefrontController extends Controller
             'headline' => 'Moda editorial conectada a un backend real.',
             'description' => 'Una experiencia premium de catalogo, promociones, carrito y administracion.',
             'stats' => [
-                'products' => Product::query()->count(),
+                'products' => $allProducts->count(),
                 'featured' => Product::query()->where('is_featured', true)->count(),
                 'categories' => $categories->count(),
                 'stock' => Product::query()->sum('stock'),
@@ -70,6 +76,7 @@ class StorefrontController extends Controller
             ],
             'categories' => $categories,
             'promotions' => $promotions,
+            'allProducts' => $allProducts,
             'featuredProducts' => $featuredProducts,
             'latestProducts' => $latestProducts,
         ]);

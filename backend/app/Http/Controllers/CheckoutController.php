@@ -22,11 +22,17 @@ class CheckoutController extends Controller
         $cart = $request->session()->get('cart', []);
         $products = Product::query()->whereIn('id', array_keys($cart))->get();
         $total = $products->sum(fn (Product $product) => $product->final_price * ($cart[$product->id]['quantity'] ?? 0));
+        $dniLookupConfigured = $this->peruIdentityService->isConfigured();
 
         return view('checkout.create', [
             'products' => $products,
             'cart' => $cart,
             'total' => $total,
+            'documentLookupConfigured' => $dniLookupConfigured,
+            'documentLookupMessage' => $dniLookupConfigured
+                ? 'Ingresa un DNI de 8 digitos o un RUC de 11 digitos para autocompletar datos.'
+                : $this->peruIdentityService->missingConfigurationMessage(),
+            'peruUbigeo' => $this->loadPeruUbigeo(),
         ]);
     }
 
@@ -35,7 +41,7 @@ class CheckoutController extends Controller
         $data = $request->validate([
             'customer_first_name' => ['required', 'string', 'max:255'],
             'customer_last_name' => ['required', 'string', 'max:255'],
-            'document_type' => ['required', 'string', 'in:DNI,CE'],
+            'document_type' => ['required', 'string', 'in:DNI,CE,RUC'],
             'document_number' => ['required', 'string', 'max:20'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:30'],
@@ -115,5 +121,35 @@ class CheckoutController extends Controller
         }
 
         return response()->json($result['data']);
+    }
+
+    public function lookupRuc(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'ruc' => ['required', 'digits:11'],
+        ]);
+
+        $result = $this->peruIdentityService->lookupRuc($data['ruc']);
+
+        if (! $result['success']) {
+            return response()->json([
+                'message' => $result['message'],
+            ], $result['status']);
+        }
+
+        return response()->json($result['data']);
+    }
+
+    protected function loadPeruUbigeo(): array
+    {
+        $contents = file_get_contents(resource_path('data/peru-ubigeo.json'));
+
+        if ($contents === false) {
+            return [];
+        }
+
+        $contents = preg_replace('/^\xEF\xBB\xBF/', '', $contents);
+
+        return json_decode($contents, true) ?? [];
     }
 }

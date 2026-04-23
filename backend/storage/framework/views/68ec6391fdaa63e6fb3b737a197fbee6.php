@@ -35,7 +35,7 @@
                 <img class="admin-avatar" src="<?php echo e(asset('yotello-mark.svg')); ?>" alt="YO-TELLO">
                 <div>
                     <strong>Panel Admin</strong>
-                    <span><?php echo e(auth()->user()?->email ?? 'admin@yotello.com'); ?></span>
+                    <span><?php echo e(auth('admin')->user()?->email ?? 'admin@yotello.com'); ?></span>
                 </div>
             </div>
 

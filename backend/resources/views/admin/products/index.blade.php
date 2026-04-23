@@ -24,7 +24,15 @@
             <tbody>
                 @foreach ($products as $product)
                     <tr>
-                        <td>{{ $product->name }}</td>
+                        <td>
+                            <div class="admin-product-cell">
+                                <img src="{{ $product->image }}" alt="{{ $product->name }}">
+                                <div>
+                                    <strong>{{ $product->name }}</strong>
+                                    <small class="admin-note">{{ \Illuminate\Support\Str::limit($product->description, 64) }}</small>
+                                </div>
+                            </div>
+                        </td>
                         <td>{{ $product->category_name }}</td>
                         <td>
                             <strong>S/. {{ number_format($product->final_price, 0, ',', '.') }}</strong>

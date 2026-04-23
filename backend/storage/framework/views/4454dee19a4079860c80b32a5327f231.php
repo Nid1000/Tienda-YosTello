@@ -1,8 +1,8 @@
 <?php $__env->startSection('content'); ?>
     <header class="admin-topbar">
         <div>
-            <p class="eyebrow">Panel de administracion</p>
-            <h1>Vision general de la tienda</h1>
+            <p class="eyebrow">Panel de administración</p>
+            <h1>Visión general de la tienda</h1>
         </div>
     </header>
 
@@ -28,22 +28,48 @@
     <div class="admin-dashboard-grid">
                 <section class="admin-surface">
                     <div class="admin-surface-head">
-                        <h2>Vision general de ventas (7 dias)</h2>
-                        <span>Semanal</span>
+                        <h2>Ventas de la semana</h2>
+                        <span><?php echo e($hasWeeklySales ? '7 días' : 'Vista preliminar'); ?></span>
                     </div>
 
-                    <div class="admin-chart">
-                        <?php $__currentLoopData = $weeklySales; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $day): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="admin-chart <?php echo e($hasWeeklySales ? '' : 'is-preview'); ?>">
+                        <?php $__currentLoopData = $weeklyChart; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $day): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="admin-bar-col">
                                 <div class="admin-bar-wrap">
                                     <div
                                         class="admin-bar"
-                                        style="height: <?php echo e(max(8, ($day['amount'] / $maxWeeklySales) * 220)); ?>px"
-                                        title="S/. <?php echo e(number_format($day['amount'], 2, ',', '.')); ?>"
+                                        style="height: <?php echo e(max(24, ($day['amount'] / $maxWeeklySales) * 220)); ?>px"
+                                        title="S/. <?php echo e(number_format($day['amount'], 0, ',', '.')); ?>"
                                     ></div>
                                 </div>
+                                <strong><?php echo e($hasWeeklySales ? 'S/. '.number_format($day['amount'], 0, ',', '.') : 'Ref.'); ?></strong>
                                 <span><?php echo e($day['label']); ?></span>
                             </div>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </div>
+
+                    <?php if (! ($hasWeeklySales)): ?>
+                        <p class="admin-chart-note">Aún no hay pedidos esta semana. Estas barras sirven como guía visual; se reemplazarán con ventas reales automáticamente.</p>
+                    <?php endif; ?>
+                </section>
+
+                <section class="admin-surface">
+                    <div class="admin-surface-head">
+                        <h2>Inventario por categoría</h2>
+                        <span><?php echo e($stats['products']); ?> productos</span>
+                    </div>
+
+                    <div class="admin-horizontal-chart">
+                        <?php $__currentLoopData = $categoryInventory; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <article class="admin-hbar-row">
+                                <div class="admin-hbar-label">
+                                    <strong><?php echo e($category['name']); ?></strong>
+                                    <span><?php echo e($category['products']); ?> prod. | <?php echo e($category['stock']); ?> und.</span>
+                                </div>
+                                <div class="admin-hbar-track">
+                                    <div class="admin-hbar" style="width: <?php echo e(max(8, ($category['stock'] / $maxCategoryStock) * 100)); ?>%"></div>
+                                </div>
+                            </article>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                 </section>
@@ -54,18 +80,23 @@
                         <span>Resumen</span>
                     </div>
 
-                    <div class="admin-profit-grid">
-                        <div class="admin-profit-card">
-                            <span>Con descuento</span>
-                            <strong><?php echo e($stats['discounted_products']); ?></strong>
+                    <div class="admin-donut-wrap">
+                        <?php
+                            $discountPercent = $stats['products'] > 0 ? round(($stats['discounted_products'] / $stats['products']) * 100) : 0;
+                        ?>
+                        <div class="admin-donut" style="--value: <?php echo e($discountPercent); ?>">
+                            <strong><?php echo e($discountPercent); ?>%</strong>
+                            <span>con descuento</span>
                         </div>
-                        <div class="admin-profit-card">
-                            <span>Inventario</span>
-                            <strong>S/. <?php echo e(number_format($stats['inventory_value'], 0, ',', '.')); ?></strong>
-                        </div>
-                        <div class="admin-profit-card accent-card">
-                            <span>Ganancia estimada</span>
-                            <strong>S/. <?php echo e(number_format($stats['projected_profit'], 0, ',', '.')); ?></strong>
+                        <div class="admin-profit-grid">
+                            <div class="admin-profit-card">
+                                <span>Valor de inventario</span>
+                                <strong>S/. <?php echo e(number_format($stats['inventory_value'], 0, ',', '.')); ?></strong>
+                            </div>
+                            <div class="admin-profit-card accent-card">
+                                <span>Ganancia estimada</span>
+                                <strong>S/. <?php echo e(number_format($stats['projected_profit'], 0, ',', '.')); ?></strong>
+                            </div>
                         </div>
                     </div>
                 </section>

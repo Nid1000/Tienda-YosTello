@@ -29,6 +29,18 @@ class CategorySeeder extends Seeder
                 'image' => 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=900&q=80',
                 'sort_order' => 3,
             ],
+            [
+                'name' => 'Accesorios',
+                'description' => 'Gorras, correas y detalles que completan el look YO-TELLO.',
+                'image' => 'https://images.unsplash.com/photo-1523779105320-d1cd346ff52b?auto=format&fit=crop&w=900&q=80',
+                'sort_order' => 4,
+            ],
+            [
+                'name' => 'Bolsos',
+                'description' => 'Bolsos compactos y mochilas urbanas para llevar lo esencial.',
+                'image' => 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80',
+                'sort_order' => 5,
+            ],
         ];
 
         foreach ($categories as $category) {

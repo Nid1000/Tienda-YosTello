@@ -35,7 +35,7 @@
                 <img class="admin-avatar" src="{{ asset('yotello-mark.svg') }}" alt="YO-TELLO">
                 <div>
                     <strong>Panel Admin</strong>
-                    <span>{{ auth()->user()?->email ?? 'admin@yotello.com' }}</span>
+                    <span>{{ auth('admin')->user()?->email ?? 'admin@yotello.com' }}</span>
                 </div>
             </div>
 

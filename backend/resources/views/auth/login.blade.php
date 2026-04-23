@@ -1,33 +1,43 @@
-@extends('layouts.app', ['title' => 'YO-TELLO | Login'])
+<x-guest-layout title="YO-TELLO | Iniciar sesion">
+    <x-auth-session-status class="mb-4" :status="session('status')" />
 
-@section('content')
-    <section class="section compact">
-        <div class="container auth-shell">
-            <div class="auth-card">
-                <p class="eyebrow">Acceso clientes</p>
-                <h1>Ingresa a tu cuenta</h1>
-                <p class="lead compact-lead">Este inicio es solo para clientes: compras, carrito y pedidos.</p>
-                <form method="POST" action="{{ route('login') }}" class="stack-form">
-                    @csrf
-                    <label>
-                        <span>Email</span>
-                        <input type="email" name="email" value="{{ old('email') }}" required>
-                    </label>
-                    <label>
-                        <span>Contrasena</span>
-                        <input type="password" name="password" required>
-                    </label>
-                    <label class="check-row">
-                        <input type="checkbox" name="remember" value="1">
-                        <span>Recordarme</span>
-                    </label>
-                    <button class="button primary" type="submit">Entrar como cliente</button>
-                </form>
-                <p class="auth-footer">
-                    No tienes cuenta?
-                    <a href="{{ route('register') }}">Crear cuenta</a>
-                </p>
-            </div>
+    <div class="section-heading">
+        <p class="eyebrow">Cuenta YO-TELLO</p>
+        <h2>Iniciar sesion</h2>
+        <p class="compact-lead">Accede a tu carrito, pedidos y beneficios de la tienda.</p>
+    </div>
+
+    <form method="POST" action="{{ route('login') }}" class="stack-form">
+        @csrf
+
+        <label>
+            <span>Correo electronico</span>
+            <x-text-input id="email" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        </label>
+
+        <label>
+            <span>Contrasena</span>
+            <x-text-input id="password" type="password" name="password" required autocomplete="current-password" />
+            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        </label>
+
+        <label for="remember_me" class="check-row">
+            <input id="remember_me" type="checkbox" name="remember">
+            <span>Recordarme</span>
+        </label>
+
+        <div class="checkout-actions-panel">
+            @if (Route::has('password.request'))
+                <a class="muted-copy" href="{{ route('password.request') }}">Olvide mi contrasena</a>
+            @endif
+
+            <button class="button primary" type="submit">Entrar</button>
         </div>
-    </section>
-@endsection
+
+        <p class="compact-lead">
+            ¿Primera vez en YO-TELLO?
+            <a class="danger-link" href="{{ route('register') }}">Crear cuenta</a>
+        </p>
+    </form>
+</x-guest-layout>

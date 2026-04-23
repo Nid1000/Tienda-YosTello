@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Admin;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -10,12 +11,12 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::query()->updateOrCreate(
+        Admin::query()->updateOrCreate(
             ['email' => 'admin@novawear.test'],
             [
                 'name' => 'Administrador YO-TELLO',
                 'password' => Hash::make('Admin12345'),
-                'role' => 'admin',
+                'is_active' => true,
             ]
         );
 
